@@ -83,7 +83,8 @@ function App() {
       {videoSrc && (
         <>
           <video src={videoSrc} ref={videoRef} className="mb-4 w-full rounded-lg shadow-lg" onTimeUpdate={handlePauseVideo} controls/>
-          <div className="w-full mb-4"><Nouislider behaviour='tap-drag' step={1} range={{min:0, max:videoDuration || 2}} start={[0, videoDuration || 2]} connect onUpdate={updateOnSliderChange}/></div>
+          <div className="w-full mb-4">
+	  <Nouislider behaviour='tap-drag' step={1} range={{min:0, max:videoDuration || 2}} start={[0, videoDuration || 2]} connect onUpdate={updateOnSliderChange}/></div>
         </>
       )}
     </>
