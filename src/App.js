@@ -20,7 +20,7 @@ function App() {
   // Define Swal as a global variable to prevent ESLint errors
 
   /* global Swal */
-
+		
   const loadScript = (src) => {
     return new Promise((onFulfilled, _) => {
       const script = document.createElement("script");
