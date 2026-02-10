@@ -15,7 +15,7 @@ function App() {
   const videoRef = useRef();
   const [videoDuration, setVideoDuration] = useState(0);
 
-  let initialSliderValues = 0;
+  let initialSliderValue = 0;
 
   // Define Swal as a global variable to prevent ESLint errors
 
@@ -60,7 +60,28 @@ function App() {
 
   const handlePauseVideo = () => {};
 
-  const updateOnSliderChange = () => {};
+  const updateOnSliderChange = (values, handle) => {
+	setVideoTrimmedUrl("")
+	let readValue;
+	if (handle){
+		readValue = values[handle] | 0;
+		if (endTime != readValue)
+		{
+			setEndTime(readValue)
+		}
+		else {
+		readValue = values[handle] | 0;
+			if (initialSliderValue !== readValue)
+			{
+				initialSliderValue = readValue
+				if (videoRef && videoRef.current){
+					videoRef.current.currentTime = readValue;
+					setStartTime(readValue)
+				}
+			}
+		}
+	}	  
+  };
 
   useEffect(() => {
     if(videoRef && videoRef.current){
@@ -73,23 +94,40 @@ function App() {
   }, 
   [videoSrc]);
 
-  return (
-    <>
-      <div className="App p-6 bg-gray-100 min-h-screen flex flex-col items-center justify-center">
-        <h1 className="text-3xl font-bold mb-6">Vaideon</h1>
-        <input onChange={handleFileUpload} type="file" className="p-2 border border-gray-300 rounded-md shadow-sm" />
-      </div>
+	return (
+  <>
+    <div className="App p-6 bg-gray-100 min-h-screen flex flex-col items-center justify-center">
+      <h1 className="text-3xl font-bold mb-6">Vaideon</h1>
+      <input
+        onChange={handleFileUpload}
+        type="file"
+        className="p-2 border border-gray-300 rounded-md shadow-sm"
+      />
+    </div>
 
-      {videoSrc && (
-        <>
-          <video src={videoSrc} ref={videoRef} className="mb-4 w-full rounded-lg shadow-lg" onTimeUpdate={handlePauseVideo} controls/>
-          	<div className="w-full mb-4">
-	            <Nouislider behaviour='tap-drag' step={1} range={{min:0, max:videoDuration || 2}} start={[0, videoDuration || 2]} connect onUpdate={updateOnSliderChange}/>
-		</div>
-        </>
-      )}
-    </>
-  );
+    {videoSrc && (
+      <div className="w-full max-w-4xl px-6">
+        <video
+          src={videoSrc}
+          ref={videoRef}
+          className="mb-4 w-full rounded-lg shadow-lg"
+          onTimeUpdate={handlePauseVideo}
+          controls
+        />
+
+        <Nouislider
+          behaviour="tap-drag"
+          step={1}
+          range={{ min: 0, max: videoDuration || 2 }}
+          start={[0, videoDuration || 2]}
+          connect
+          onUpdate={updateOnSliderChange}
+        />
+      </div>
+    )}
+  </>
+);
+
 }
 
 export default App;
