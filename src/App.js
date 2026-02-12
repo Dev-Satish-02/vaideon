@@ -64,22 +64,14 @@ function App() {
 
   const updateOnSliderChange = (values, handle) => {
     setVideoTrimmedUrl("");
-    let readValue;
-    if (handle) {
-      readValue = values[handle] | 0;
-      if (endTime != readValue) {
-        setEndTime(readValue);
-      } else {
-        readValue = values[handle] | 0;
-        if (initialSliderValue !== readValue) {
-          initialSliderValue = readValue;
-          if (videoRef && videoRef.current) {
-            videoRef.current.currentTime = readValue;
-            setStartTime(readValue);
-          }
-        }
+    const value = Math.floor(values[handle]);
+    if (handle === 0) {
+      setStartTime(value);
+      if (videoRef.current) {
+        videoRef.current.currentTime = value;
       }
     }
+    if (handle === 1) setEndTime(value);
   };
 
   useEffect(() => {
@@ -91,6 +83,20 @@ function App() {
       };
     }
   }, [videoSrc]);
+
+  const convertToHHMMSS = (val) => {
+    const secNum = parseInt(val, 10);
+    let hours = Math.floor(secNum / 3600);
+    let minutes = Math.floor((secNum - hours * 3600) / 60);
+    let seconds = secNum - hours * 3600 - minutes * 60;
+    if (hours < 10) hours = "0" + hours;
+    if (minutes < 10) minutes = "0" + minutes;
+    if (seconds < 10) seconds = "0" + seconds;
+    let time;
+    if (hours === "00") time = minutes + ":" + seconds;
+    else time = hours + ":" + minutes + ":" + seconds;
+    return time;
+  };
 
   return (
     <div className="App p-6 bg-gray-100 min-h-screen flex flex-col items-center justify-center">
