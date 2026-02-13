@@ -98,6 +98,88 @@ function App() {
     return time;
   };
 
+  const handlePlay = () => {
+    if (videoRef && videoRef.current) videoRef.current.play();
+  };
+
+  const handleAddSection = () => {
+    setSections([
+      ...sections,
+      {
+        start: startTime,
+        end: endTime,
+        fileName: `section${sections.length + 1}.mp4`,
+      },
+    ]);
+  };
+
+  let handleTrim = async () => {
+    if (isScriptLoaded) {
+      Swal.fire({
+        title: "Processing...",
+        html: "Please wait while video is being processed",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+      const { name } = videoFile;
+      await ffmpeg.FS(
+        "writeFile",
+        name,
+        await window.FFmpeg.fetchFile(videoFile),
+      );
+      for (const section of sections) {
+        const { start, end, fileName } = section;
+        await ffmpeg.run(
+          "-i",
+          name,
+          "-ss",
+          `${convertToHHMMSS(start)}`,
+          "-to",
+          `${convertToHHMMSS(end)}`,
+          "-c:v",
+          "copy",
+          fileName,
+        );
+      }
+
+      // merge into one video
+
+      const concatList = sections
+        .map((section) => `file ${section.fileName}`)
+        .join("\n");
+      ffmpeg.FS("writeFile", "concatList.txt", concatList);
+
+      await ffmpeg.run(
+        "-f",
+        "concat",
+        "-safe",
+        "0",
+        "-i",
+        "concatList.txt",
+        "-c",
+        "copy",
+        "output.mp4",
+      );
+      const data = ffmpeg.FS("readFile", "output.mp4");
+      const url = URL.createObjectURL(
+        new Blob([data.buffer], {
+          type: "video/mp4",
+        }),
+      );
+      setVideoTrimmedUrl(url);
+      Swal.close();
+      Swal.fire({
+        title: "Done",
+        text: "Video Processed",
+        icon: "success",
+        confirmButtonText: "OK",
+        allowOutsideClick: false,
+      });
+    }
+  };
+
   return (
     <div className="App p-6 bg-gray-100 min-h-screen flex flex-col items-center justify-center">
       <h1 className="text-3xl font-bold mb-6">Vaideon</h1>
@@ -130,6 +212,55 @@ function App() {
             Start Duration: {convertToHHMMSS(startTime)} &nbsp; End Duration:{" "}
             {convertToHHMMSS(endTime)}
           </div>
+
+          <div className="flex space x-4 mb-4">
+            <button
+              onClick={handlePlay}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600"
+            >
+              Play
+            </button>
+            <button
+              onClick={handleAddSection}
+              className="px-4 py-2 bg-yellow-500 text-white rounded-md shadow-md hover:bg-yellow-600"
+            >
+              Add Section
+            </button>
+          </div>
+          {sections.length > 0 && (
+            <div className="mb-4 text-gray-700 w-full max-w-md">
+              <h2 className="text-4xl font-semibold mb-2 text-gray-800">
+                Sections
+              </h2>
+              <ul>
+                {sections.map((section, index) => (
+                  <li key={index}>
+                    Section {index + 1}: {convertToHHMMSS(section.start)} -{" "}
+                    {convertToHHMMSS(section.end)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div className="flex space-x-4">
+            <button
+              onClick={handleTrim}
+              className="px-4 py-2 bg-green-500 text-white rounded-md shadow-md hover:bg-green-500"
+            >
+              Trim & Merge
+            </button>
+          </div>
+          {videoTrimmedUrl && (
+            <div className="mt-4">
+              <h2 className="text-xl font-semibold mb-2 text-gray-800">
+                {" "}
+                Merged & Trimmed Video
+              </h2>
+              <video controls className="w-full max-w-md rounded-lg shadow-lg">
+                <source src={videoTrimmedUrl} type="video/mp4"/>
+              </video>
+            </div>
+          )}
         </>
       )}
     </div>
